@@ -1,17 +1,13 @@
 import React from 'react'
 import { useEffect, useMemo, useRef, useState, useCallback, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Lenis from 'lenis'
+import { gsap, ScrollTrigger, lenis } from './gsap-lenis-setup.js'
 import {
   ALL, BY_ID, asset, inr, search, loadCart, saveCart, cartMessage, waLink,
   PHONE, PHONE_DISPLAY, INSTAGRAM, FACEBOOK, MAPS, MAP_EMBED, ADDRESS,
 } from './lib.js'
 
-gsap.registerPlugin(ScrollTrigger)
-
-let lenisRef = null
+let lenisRef = lenis
 const scrollToId = (id) => {
   const el = document.querySelector(id)
   if (!el) return
@@ -569,11 +565,24 @@ function Occasions() {
 
 /* ───────────── Bulk enquiry form ───────────── */
 function Bulk() {
+  const vref = useRef(null)
+  useEffect(() => {
+    let effect, dead = false
+    const st = ScrollTrigger.create({
+      trigger: vref.current, start: 'top 95%', once: true,
+      onEnter: async () => {
+        const { initVanta } = await import('./vanta-setup.js')
+        if (!dead) effect = initVanta(vref.current, { color: 0x4a0d34, shininess: 38, waveHeight: 18, waveSpeed: 0.7, zoom: 0.85 })
+      },
+    })
+    return () => { dead = true; st.kill(); effect && effect.destroy() }
+  }, [])
   const [f, setF] = useState({ name: '', company: '', qty: '', budget: '', date: '', type: 'Corporate gifts', logo: true, msg: '' })
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
   const msg = `*Bulk enquiry – Xenia Collections website*\nName: ${f.name}\nCompany / Occasion: ${f.company}\nGift type: ${f.type}\nQuantity: ${f.qty}\nBudget per gift: ₹${f.budget}\nNeeded by: ${f.date}\nLogo / personalisation: ${f.logo ? 'Yes' : 'No'}\n${f.msg ? 'Note: ' + f.msg : ''}`
   return (
     <section className="bulk" id="bulk">
+      <div className="vanta-bg" ref={vref} aria-hidden />
       <div className="bulk-in">
         <div className="bulk-l">
           <p className="eyebrow"><i /> Tell us what you need</p>
@@ -652,14 +661,6 @@ export default function App() {
   const [view, setView] = useState(null)
   const [catReq, setCatReq] = useState({ cat: null, n: 0 })
 
-  useEffect(() => {
-    const lenis = new Lenis({ duration: 1.25, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true })
-    lenisRef = lenis
-    lenis.on('scroll', ScrollTrigger.update)
-    const tick = (t) => lenis.raf(t * 1000)
-    gsap.ticker.add(tick); gsap.ticker.lagSmoothing(0)
-    return () => { gsap.ticker.remove(tick); lenis.destroy(); lenisRef = null }
-  }, [])
   useEffect(() => { if (ready) setTimeout(() => ScrollTrigger.refresh(), 300) }, [ready])
   useEffect(() => saveCart(cart), [cart])
 

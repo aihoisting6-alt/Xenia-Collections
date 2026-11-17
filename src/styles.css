@@ -435,3 +435,5 @@ h1 em{color:inherit}
 .rev b{font-weight:400;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .d-note{color:var(--muted);font-size:.85rem}
 @media(max-width:1000px){.rev-grid{grid-template-columns:1fr}}
+
+.bulk{overflow:hidden}.vanta-bg{position:absolute;inset:0;z-index:0;opacity:.85}.vanta-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#0f1a0a,transparent 25%,transparent 75%,#0f1a0a)}.bulk-in{position:relative;z-index:1}
