@@ -10,12 +10,15 @@ export function Featured({ open, add }) {
   const [i, setI] = useState(0)
   const [paused, setPaused] = useState(false)
   const n = items.length
-  useEffect(() => { if (paused) return; const t = setInterval(() => setI((x) => (x + 1) % n), 3200); return () => clearInterval(t) }, [paused, n])
+  const secRef = useRef(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => { const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting)); io.observe(secRef.current); return () => io.disconnect() }, [])
+  useEffect(() => { if (paused || !inView) return; const t = setInterval(() => setI((x) => (x + 1) % n), 3200); return () => clearInterval(t) }, [paused, n, inView])
   const go = (d) => setI((x) => (x + d + n) % n)
   const start = useRef(null)
   const cur = items[i]
   return (
-    <section className="featured" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <section className="featured" ref={secRef} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div className="sec-head center"><p className="eyebrow"><i /> Signature picks</p><h2>Our most-loved <em>gifts</em></h2></div>
       <div className="cf" onPointerDown={(e) => (start.current = e.clientX)} onPointerUp={(e) => { if (start.current == null) return; const dx = e.clientX - start.current; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); start.current = null }} data-cursor="Drag">
         {items.map((p, k) => {
@@ -23,10 +26,11 @@ export function Featured({ open, add }) {
           const a = Math.abs(o)
           return (
             <motion.button key={p.id} className="cf-item" onClick={() => (o === 0 ? open(p) : setI(k))}
-              animate={{ x: `calc(-50% + ${o * 62}%)`, rotateY: o * -32, scale: 1 - Math.min(a, 3) * 0.13, zIndex: 20 - a, opacity: a > 3 ? 0 : 1 - a * 0.18, filter: `brightness(${1 - a * 0.22})` }}
+              style={{ visibility: a > 3 ? 'hidden' : 'visible' }}
+              animate={{ x: `calc(-50% + ${o * 62}%)`, rotateY: o * -32, scale: 1 - Math.min(a, 3) * 0.13, zIndex: 20 - a, opacity: a > 3 ? 0 : 1 - a * 0.22 }}
               transition={{ type: 'spring', stiffness: 120, damping: 20 }} aria-label={p.name}>
-              <img src={asset(p.img)} alt={p.name} loading="lazy" draggable={false} />
-              <span className="cf-shine" />
+              <img src={asset(p.img)} alt={p.name} loading="lazy" decoding="async" draggable={false} />
+              {a === 0 && <span className="cf-shine" />}
             </motion.button>
           )
         })}
@@ -58,25 +62,6 @@ const RAILS = [
 function Rail({ cat, title, open, add, cart, pick, rev }) {
   const ref = useRef(null)
   const items = useMemo(() => ALL.filter((p) => p.cat === cat || (cat === 'Painted Trays' && p.tag === 'Showroom')), [cat])
-  useEffect(() => {
-    const el = ref.current; let raf, on = false, hover = false, acc = 0
-    const io = new IntersectionObserver(([e]) => { on = e.isIntersecting })
-    io.observe(el)
-    const enter = () => (hover = true), leave = () => (hover = false)
-    el.addEventListener('pointerenter', enter); el.addEventListener('pointerleave', leave)
-    if (rev) el.scrollLeft = el.scrollWidth
-    const tick = () => {
-      if (on && !hover) {
-        acc += rev ? -0.45 : 0.45
-        if (Math.abs(acc) >= 1) { el.scrollLeft += Math.trunc(acc); acc -= Math.trunc(acc) }
-        if (!rev && el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) el.scrollLeft = 0
-        if (rev && el.scrollLeft <= 0) el.scrollLeft = el.scrollWidth
-      }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(raf); io.disconnect(); el.removeEventListener('pointerenter', enter); el.removeEventListener('pointerleave', leave) }
-  }, [rev])
   const nudge = (d) => ref.current.scrollBy({ left: d * ref.current.clientWidth * 0.8, behavior: 'smooth' })
   return (
     <div className="rail">
@@ -167,19 +152,23 @@ export function Cursor() {
     if (!matchMedia('(pointer: fine)').matches) return
     document.documentElement.classList.add('has-cursor')
     let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, raf
+    let last = null, lastLab = ''
     const move = (e) => {
       x = e.clientX; y = e.clientY
+      if (e.target === last) return
+      last = e.target
       const t = e.target.closest?.('[data-cursor], a, button, input, select, textarea, label')
-      setLabel(t?.dataset?.cursor || '')
+      const lab = t?.dataset?.cursor || ''
+      if (lab !== lastLab) { lastLab = lab; setLabel(lab) }
       ring.current?.classList.toggle('hot', !!t)
     }
     const tick = () => {
       rx += (x - rx) * 0.16; ry += (y - ry) * 0.16
-      if (dot.current) dot.current.style.transform = `translate(${x}px,${y}px)`
-      if (ring.current) ring.current.style.transform = `translate(${rx}px,${ry}px)`
+      if (dot.current) dot.current.style.transform = `translate3d(${x}px,${y}px,0)`
+      if (ring.current) ring.current.style.transform = `translate3d(${rx}px,${ry}px,0)`
       raf = requestAnimationFrame(tick)
     }
-    addEventListener('pointermove', move); raf = requestAnimationFrame(tick)
+    addEventListener('pointermove', move, { passive: true }); raf = requestAnimationFrame(tick)
     return () => { removeEventListener('pointermove', move); cancelAnimationFrame(raf); document.documentElement.classList.remove('has-cursor') }
   }, [])
   return (<><div className="cur-dot" ref={dot} /><div className={`cur-ring ${label ? 'lab' : ''}`} ref={ring}><span>{label}</span></div></>)

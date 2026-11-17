@@ -245,3 +245,18 @@ main{overflow-x:clip}
 .sf-warn{color:#9b145a!important}
 .sf-or{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#6b7560;text-align:center;margin:.2rem 0 -.2rem}
 .st-privacy{color:var(--muted);font-size:.74rem;text-align:center}
+
+/* ===== performance pass ===== */
+.grain{animation:none;inset:0}
+.hero-spot{inset:auto;left:0;top:0;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(255,213,107,.12),transparent 60%);will-change:transform;transform:translate(40vw,10vh)}
+.hero-bg::before,.hero-bg::after,.hero-copy::before{will-change:transform}
+.float-chip,.hero-badge,.hero-meta,.hero-up,.st-col,.st-cats button,.rc-add,.badge,.bulk-f,.stat,.mbar,.fd-q button{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.float-chip,.hero-badge{background:rgba(15,26,10,.86)}
+.st-col{background:rgba(12,20,8,.9)}
+.st-cats button{background:rgba(15,26,10,.85)}
+.mbar{background:rgba(12,20,8,.97)!important}
+.stat{background:linear-gradient(160deg,#1f2f16,#141f0d)}
+.rail{content-visibility:auto;contain-intrinsic-size:auto 360px}
+.footer{content-visibility:auto;contain-intrinsic-size:auto 500px}
+.wall-item video,.wall-item img{background:#2a1712}
+@media(max-width:1000px){.nav.solid{-webkit-backdrop-filter:none;backdrop-filter:none}.hero-bg::before,.hero-bg::after,.hero-copy::before{animation:none}}

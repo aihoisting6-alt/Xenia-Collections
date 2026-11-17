@@ -7,7 +7,7 @@ import 'lenis/dist/lenis.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
-export const lenis = new Lenis() // no autoRaf: GSAP's ticker drives it
+export const lenis = new Lenis({ lerp: 0.16, wheelMultiplier: 1.05 }) // no autoRaf: GSAP's ticker drives it; higher lerp = snappier
 lenis.on('scroll', ScrollTrigger.update)
 gsap.ticker.add((time) => lenis.raf(time * 1000))
 gsap.ticker.lagSmoothing(0)

@@ -18,10 +18,10 @@ function Preloader({ done }) {
   useEffect(() => {
     const o = { v: 0 }
     const tl = gsap.timeline({ onComplete: done })
-    tl.fromTo('.pl-mark', { opacity: 0, y: 30, letterSpacing: '0.6em' }, { opacity: 1, y: 0, letterSpacing: '0.28em', duration: 1.1, ease: 'power3.out' })
-      .to(o, { v: 100, duration: 1.2, ease: 'power2.inOut', onUpdate: () => num.current && (num.current.textContent = String(Math.round(o.v)).padStart(2, '0')) }, 0.2)
-      .to('.pl-line', { scaleX: 1, duration: 1.2, ease: 'power2.inOut' }, 0.2)
-      .to(ref.current, { yPercent: -100, duration: 0.9, ease: 'power4.inOut', delay: 0.2 })
+    tl.fromTo('.pl-mark', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' })
+      .to(o, { v: 100, duration: 0.6, ease: 'power2.inOut', onUpdate: () => num.current && (num.current.textContent = String(Math.round(o.v)).padStart(2, '0')) }, 0.1)
+      .to('.pl-line', { scaleX: 1, duration: 0.6, ease: 'power2.inOut' }, 0.1)
+      .to(ref.current, { yPercent: -100, duration: 0.6, ease: 'power4.inOut' })
     return () => tl.kill()
   }, [])
   return (
@@ -46,7 +46,7 @@ function Particles() {
     const resize = () => {
       const r = c.parentElement.getBoundingClientRect(), dpr = Math.min(devicePixelRatio, 2)
       w = r.width; h = r.height; c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      dots = Array.from({ length: Math.round(Math.min(90, w / 14)) }, () => ({
+      dots = Array.from({ length: Math.round(Math.min(48, w / 26)) }, () => ({
         x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.8 + 0.4,
         vx: (Math.random() - 0.5) * 0.15, vy: -Math.random() * 0.3 - 0.05, a: Math.random() * 0.6 + 0.3, p: Math.random() * 6.28, c: BRAND[Math.floor(Math.random() * 4)],
       }))
@@ -62,13 +62,17 @@ function Particles() {
         if (d.x < -5) d.x = w + 5; if (d.x > w + 5) d.x = -5
         const tw = 0.5 + 0.5 * Math.sin(t / 700 + d.p)
         ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, 6.28)
-        ctx.fillStyle = d.c + Math.round(d.a * tw * 255).toString(16).padStart(2, '0'); ctx.shadowColor = d.c; ctx.shadowBlur = 8; ctx.fill()
+        ctx.fillStyle = d.c + Math.round(d.a * tw * 255).toString(16).padStart(2, '0'); ctx.fill()
       }
-      raf = requestAnimationFrame(tick)
+      raf = visible ? requestAnimationFrame(tick) : 0
     }
+    let visible = true
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf) raf = requestAnimationFrame(tick) })
+    io.observe(c)
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return () => io.disconnect()
     resize(); raf = requestAnimationFrame(tick)
-    addEventListener('resize', resize); addEventListener('pointermove', move)
-    return () => { cancelAnimationFrame(raf); removeEventListener('resize', resize); removeEventListener('pointermove', move) }
+    addEventListener('resize', resize); addEventListener('pointermove', move, { passive: true })
+    return () => { cancelAnimationFrame(raf); io.disconnect(); removeEventListener('resize', resize); removeEventListener('pointermove', move) }
   }, [])
   return <canvas ref={ref} className="particles" aria-hidden />
 }
@@ -111,7 +115,7 @@ function Hero() {
       gsap.set('.hero .wi', { yPercent: 110 })
       gsap.set('.hero-fade', { opacity: 0, y: 30 })
       gsap.set('.wall-item', { opacity: 0, y: 80, scale: 0.92 })
-      const tl = gsap.timeline({ delay: 2.9, defaults: { ease: 'power4.out' } })
+      const tl = gsap.timeline({ delay: 1.1, defaults: { ease: 'power4.out' } })
       tl.to('.hero .wi', { yPercent: 0, duration: 1.3, stagger: 0.07 })
         .to('.hero-fade', { opacity: 1, y: 0, duration: 1, stagger: 0.12 }, 0.5)
         .to('.wall-item', { opacity: 1, y: 0, scale: 1, duration: 1.4, stagger: 0.1 }, 0.3)
@@ -124,36 +128,38 @@ function Hero() {
       const ry = gsap.quickTo('.hero-wall', 'rotationY', { duration: 1.2, ease: 'power3' })
       const fx = gsap.quickTo('.hero-badge', 'x', { duration: 1.4, ease: 'power3' })
       const fy = gsap.quickTo('.hero-badge', 'y', { duration: 1.4, ease: 'power3' })
+      const sx = gsap.quickTo('.hero-spot', 'x', { duration: 0.6, ease: 'power3' })
+      const sy = gsap.quickTo('.hero-spot', 'y', { duration: 0.6, ease: 'power3' })
       const move = (e) => {
+        if (scrollY > innerHeight) return
         const nx = e.clientX / innerWidth - 0.5, ny = e.clientY / innerHeight - 0.5
-        ry(nx * 10); rx(-ny * 8); fx(nx * -30); fy(ny * -24)
-        root.current.style.setProperty('--mx', e.clientX + 'px'); root.current.style.setProperty('--my', e.clientY + 'px')
+        ry(nx * 10); rx(-ny * 8); fx(nx * -30); fy(ny * -24); sx(e.clientX - 450); sy(e.clientY - 450)
       }
-      addEventListener('pointermove', move)
+      if (matchMedia('(pointer: fine)').matches) addEventListener('pointermove', move, { passive: true })
       return () => removeEventListener('pointermove', move)
     }, root)
     return () => ctx.revert()
   }, [])
-  const V = (n) => ({ src: `vid/v${n}.mp4`, poster: `vid/v${n}.jpg` })
+  const V = (n) => ({ src: `vid/v${n}.mp4`, poster: `vid/v${n}.webp` })
   return (
     <section className="hero" id="top" ref={root}>
       <div className="hero-bg" />
       <Particles />
       <div className="hero-wall" aria-hidden>
         <div className="wall-col c1">
-          <div className="wall-item tall"><Video {...V(1)} autoPlay /></div>
-          <div className="wall-item"><img src={asset('img/shop/p0.jpg')} alt="" /></div>
-          <div className="wall-item tall"><Video {...V(4)} autoPlay /></div>
+          <div className="wall-item tall"><Video {...V(1)} still /></div>
+          <div className="wall-item"><img src={asset('img/shop/p0.webp')} alt="" fetchpriority="high" /></div>
+          <div className="wall-item tall"><img src={asset('vid/v4.webp')} alt="" /></div>
         </div>
         <div className="wall-col c2">
-          <div className="wall-item"><img src={asset('img/shop/peacock.jpg')} alt="" /></div>
-          <div className="wall-item tall"><Video {...V(2)} autoPlay /></div>
-          <div className="wall-item"><img src={asset('img/silver/s9_1.jpg')} alt="" /></div>
+          <div className="wall-item"><img src={asset('img/shop/peacock.webp')} alt="" fetchpriority="high" /></div>
+          <div className="wall-item tall"><Video {...V(2)} still /></div>
+          <div className="wall-item"><img src={asset('img/silver/s9_1.webp')} alt="" /></div>
         </div>
         <div className="wall-col c3">
-          <div className="wall-item tall"><Video {...V(3)} autoPlay /></div>
-          <div className="wall-item"><img src={asset('img/shop/p12.jpg')} alt="" /></div>
-          <div className="wall-item tall"><Video {...V(5)} autoPlay /></div>
+          <div className="wall-item tall"><Video {...V(3)} still /></div>
+          <div className="wall-item"><img src={asset('img/shop/p12.webp')} alt="" /></div>
+          <div className="wall-item tall"><img src={asset('vid/v5.webp')} alt="" /></div>
         </div>
       </div>
       <div className="hero-spot" aria-hidden />
@@ -213,8 +219,8 @@ function About() {
     <section className="about" id="about" ref={ref}>
       <div className="about-grid">
         <div className="about-imgs">
-          <img className="parallax a1" src={asset('img/shop/peacock.jpg')} alt="Hand-painted peacock tray" />
-          <img className="parallax a2" src={asset('img/silver/s14_3.jpg')} alt="German silver samai pair" />
+          <img className="parallax a1" src={asset('img/shop/peacock.webp')} alt="Hand-painted peacock tray" />
+          <img className="parallax a2" src={asset('img/silver/s14_3.webp')} alt="German silver samai pair" />
         </div>
         <div>
           <p className="eyebrow"><i /> One-stop gifting shop</p>
@@ -237,12 +243,12 @@ function About() {
 
 /* ───────────── Category tiles ───────────── */
 const TILES = [
-  { cat: 'German Silver', t: 'German Silver', d: 'Diyas, samais, frames & trays', img: 'img/silver/s14_3.jpg', big: true },
-  { cat: 'Painted Trays', t: 'Hand-painted Trays', d: 'Glass & gold-leaf art', img: 'img/shop/peacock.jpg' },
-  { cat: 'Diaries', t: 'Executive Diaries', d: 'Leather, cork & fabric', img: 'img/shop/p0.jpg' },
-  { cat: 'Bottles', t: 'Bottles & Tumblers', d: 'Steel, copper & eco', img: 'img/bottle/b1.jpg' },
-  { cat: '4-in-1 Sets', t: 'Corporate Gift Sets', d: '2, 3 & 4-in-1 boxes', img: 'img/gs4/c2_1.jpg', big: true },
-  { cat: 'Hip Flask Sets', t: 'Hip Flask Sets', d: 'Premium & gift-boxed', img: 'img/flask/f2.jpg' },
+  { cat: 'German Silver', t: 'German Silver', d: 'Diyas, samais, frames & trays', img: 'img/silver/s14_3.webp', big: true },
+  { cat: 'Painted Trays', t: 'Hand-painted Trays', d: 'Glass & gold-leaf art', img: 'img/shop/peacock.webp' },
+  { cat: 'Diaries', t: 'Executive Diaries', d: 'Leather, cork & fabric', img: 'img/shop/p0.webp' },
+  { cat: 'Bottles', t: 'Bottles & Tumblers', d: 'Steel, copper & eco', img: 'img/bottle/b1.webp' },
+  { cat: '4-in-1 Sets', t: 'Corporate Gift Sets', d: '2, 3 & 4-in-1 boxes', img: 'img/gs4/c1.webp', big: true },
+  { cat: 'Hip Flask Sets', t: 'Hip Flask Sets', d: 'Premium & gift-boxed', img: 'img/flask/f2.webp' },
 ]
 function Tile({ t, pick }) {
   const ref = useRef(null)
@@ -448,7 +454,7 @@ function Reels() {
         <p className="sub">Real pieces, real finish — straight from our shelves.</p></div>
       <div className="reel-track" data-lenis-prevent>
         {REELS.map(([n, t]) => (
-          <div className="reel" key={n}><Video src={`vid/v${n}.mp4`} poster={`vid/v${n}.jpg`} /><span>{t}</span></div>
+          <div className="reel" key={n}><Video src={`vid/v${n}.mp4`} poster={`vid/v${n}.webp`} /><span>{t}</span></div>
         ))}
       </div>
     </section>
@@ -477,10 +483,10 @@ function Reviews() {
 
 /* ───────────── Corporate / process (pinned horizontal) ───────────── */
 const STEPS = [
-  ['01', 'Choose', 'Browse the catalogue and tap + Enquire on everything you like — diaries, bottles, gift sets, silver.', 'img/gs3/b2_1.jpg'],
-  ['02', 'Personalise', 'Add your logo, name or message. We emboss, print, engrave or tag — whatever suits the product.', 'img/shop/p1.jpg'],
-  ['03', 'Get your quote', 'Send the list on WhatsApp. You get bulk pricing and a design preview, usually the same day.', 'img/gs4/c4_2.jpg'],
-  ['04', 'Delivered gift-ready', 'Packed beautifully and delivered for your wedding, event, office or festival.', 'img/silver/s7_1.jpg'],
+  ['01', 'Choose', 'Browse the catalogue and tap + Enquire on everything you like — diaries, bottles, gift sets, silver.', 'img/gs3/b5.webp'],
+  ['02', 'Personalise', 'Add your logo, name or message. We emboss, print, engrave or tag — whatever suits the product.', 'img/shop/p1.webp'],
+  ['03', 'Get your quote', 'Send the list on WhatsApp. You get bulk pricing and a design preview, usually the same day.', 'img/gs4/c10.webp'],
+  ['04', 'Delivered gift-ready', 'Packed beautifully and delivered for your wedding, event, office or festival.', 'img/silver/s7_1.webp'],
 ]
 function Custom() {
   const root = useRef(null)

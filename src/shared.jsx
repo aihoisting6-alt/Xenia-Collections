@@ -85,14 +85,19 @@ export function Counter({ to, prefix = '', suffix = '' }) {
   }, [to])
   return <span ref={ref}>{prefix}0{suffix}</span>
 }
-export function Video({ src, poster, className = '', ...rest }) {
+export function Video({ src, poster, className = '', still = false, ...rest }) {
   const ref = useRef(null)
+  const phoneStill = still && typeof window !== 'undefined' && matchMedia('(max-width: 1000px), (prefers-reduced-motion: reduce)').matches
   useEffect(() => {
+    if (phoneStill) return
     const el = ref.current
-    const io = new IntersectionObserver(([e]) => { e.isIntersecting ? el.play().catch(() => {}) : el.pause() }, { threshold: 0.25 })
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { if (!el.src) el.src = asset(src); el.play().catch(() => {}) } else el.pause()
+    }, { threshold: 0.2, rootMargin: '150px 0px' })
     io.observe(el); return () => io.disconnect()
   }, [])
-  return <video ref={ref} className={className} src={asset(src)} poster={asset(poster)} muted loop playsInline preload="metadata" {...rest} />
+  if (phoneStill) return <img className={className} src={asset(poster)} alt="" />
+  return <video ref={ref} className={className} poster={asset(poster)} muted loop playsInline preload="none" {...rest} />
 }
 
 /* ───── Toasts (tiny event bus) ───── */

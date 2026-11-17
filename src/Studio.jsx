@@ -6,16 +6,16 @@ import { WAIcon, Reveal, toast, ACCEPT, MAX_FILES, MAX_MB, toEntries, fileKind, 
 
 /* Categories for the studio: preview bases + what to upload */
 export const STUDIO = [
-  { k: 'Corporate gifts', bases: ['img/gs4/c1.jpg', 'img/gs3/b5.jpg', 'img/shop/p0.jpg'], hint: 'Company logo (PNG, SVG, AI or PDF), employee name list (Excel / CSV), brand colours or guidelines.' },
-  { k: 'Return gifts', bases: ['img/silver/s8_1.jpg', 'img/silver/s1_3.jpg', 'img/shop/peacock.jpg'], hint: 'Child’s or host’s name, party theme, a photo or your invitation design.' },
-  { k: 'Wedding', bases: ['img/silver/s9_1.jpg', 'img/silver/s14_3.jpg', 'img/silver/s15_2.jpg'], hint: 'Couple names and date, monogram or wedding logo, invitation card design.' },
-  { k: 'Engagement', bases: ['img/silver/s20_1.jpg', 'img/silver/s16_3.jpg', 'img/silver/s23_2.jpg'], hint: 'Couple names, ceremony date and your colour theme.' },
-  { k: 'Festival gifting', bases: ['img/silver/s5_3.jpg', 'img/silver/s13_3.jpg', 'img/silver/s21_4.jpg'], hint: 'Festival greeting text, company logo (for corporate gifting) and the recipient list.' },
-  { k: 'Diaries', bases: ['img/shop/p0.jpg', 'img/shop/p1.jpg', 'img/diary/d1.jpg'], hint: 'Logo for debossing or printing on the cover, names list for personalised diaries.' },
-  { k: 'Bottles', bases: ['img/bottle/b1.jpg', 'img/bottle/b5.jpg', 'img/shop/p8.jpg'], hint: 'Logo for laser engraving or printing, plus a names list if each bottle is personalised.' },
-  { k: 'German silver', bases: ['img/silver/s14_3.jpg', 'img/silver/s4_4.jpg', 'img/silver/s17_3.jpg'], hint: 'Name or message for the tag / box, logo for the box sticker.' },
-  { k: 'Gift sets', bases: ['img/gs3/b5.jpg', 'img/gs2/a1.jpg', 'img/gs4/c5.jpg'], hint: 'Logo for the diary, keychain and gift box, plus a names list.' },
-  { k: 'Hip flask sets', bases: ['img/flask/f1.jpg', 'img/flask/f4.jpg', 'img/flask/f6.jpg'], hint: 'Logo or name for engraving on the flask.' },
+  { k: 'Corporate gifts', bases: ['img/gs4/c1.webp', 'img/gs3/b5.webp', 'img/shop/p0.webp'], hint: 'Company logo (PNG, SVG, AI or PDF), employee name list (Excel / CSV), brand colours or guidelines.' },
+  { k: 'Return gifts', bases: ['img/silver/s8_1.webp', 'img/silver/s1_3.webp', 'img/shop/peacock.webp'], hint: 'Child’s or host’s name, party theme, a photo or your invitation design.' },
+  { k: 'Wedding', bases: ['img/silver/s9_1.webp', 'img/silver/s14_3.webp', 'img/silver/s15_2.webp'], hint: 'Couple names and date, monogram or wedding logo, invitation card design.' },
+  { k: 'Engagement', bases: ['img/silver/s20_1.webp', 'img/silver/s16_3.webp', 'img/silver/s23_2.webp'], hint: 'Couple names, ceremony date and your colour theme.' },
+  { k: 'Festival gifting', bases: ['img/silver/s5_3.webp', 'img/silver/s13_3.webp', 'img/silver/s21_4.webp'], hint: 'Festival greeting text, company logo (for corporate gifting) and the recipient list.' },
+  { k: 'Diaries', bases: ['img/shop/p0.webp', 'img/shop/p1.webp', 'img/diary/d1.webp'], hint: 'Logo for debossing or printing on the cover, names list for personalised diaries.' },
+  { k: 'Bottles', bases: ['img/bottle/b1.webp', 'img/bottle/b5.webp', 'img/shop/p8.webp'], hint: 'Logo for laser engraving or printing, plus a names list if each bottle is personalised.' },
+  { k: 'German silver', bases: ['img/silver/s14_3.webp', 'img/silver/s4_4.webp', 'img/silver/s17_3.webp'], hint: 'Name or message for the tag / box, logo for the box sticker.' },
+  { k: 'Gift sets', bases: ['img/gs3/b5.webp', 'img/gs2/a1.webp', 'img/gs4/c5.webp'], hint: 'Logo for the diary, keychain and gift box, plus a names list.' },
+  { k: 'Hip flask sets', bases: ['img/flask/f1.webp', 'img/flask/f4.webp', 'img/flask/f6.webp'], hint: 'Logo or name for engraving on the flask.' },
 ]
 const PERS = ['Logo print', 'Name print', 'Laser engraving', 'Embossing / debossing', 'Custom tag / card', 'Custom packaging', 'Ribbon & colour theme']
 const STYLES = [['Print', 'print'], ['Gold foil', 'gold'], ['Engraved', 'engrave'], ['Emboss', 'emboss']]
@@ -164,12 +164,18 @@ export default function Studio({ files, setFiles, req }) {
   const [flow, setFlow] = useState(false)
 
   useEffect(() => { // Vanta waves background (user's vanta-setup), lazy
-    let effect, dead = false
-    const st = ScrollTrigger.create({
-      trigger: vref.current, start: 'top 95%', once: true,
-      onEnter: async () => { const { initVanta } = await import('./vanta-setup.js'); if (!dead) effect = initVanta(vref.current, { color: 0x3a0b2c, shininess: 30, waveHeight: 16, waveSpeed: 0.6, zoom: 0.85 }) },
-    })
-    return () => { dead = true; st.kill(); effect && effect.destroy() }
+    if (matchMedia('(max-width: 1000px), (prefers-reduced-motion: reduce)').matches) return
+    let effect, dead = false, busy = false
+    const start = async () => {
+      if (effect || busy) return
+      busy = true
+      const { initVanta } = await import('./vanta-setup.js')
+      busy = false
+      if (!dead && !effect) effect = initVanta(vref.current, { color: 0x3a0b2c, shininess: 30, waveHeight: 16, waveSpeed: 0.6, zoom: 0.85, scale: 1, scaleMobile: 1 })
+    }
+    const stop = () => { effect && effect.destroy(); effect = null }
+    const st = ScrollTrigger.create({ trigger: vref.current, start: 'top bottom', end: 'bottom top', onEnter: start, onEnterBack: start, onLeave: stop, onLeaveBack: stop })
+    return () => { dead = true; st.kill(); stop() }
   }, [])
   useEffect(() => { // preset from "Customise with my logo" on a product
     if (!req?.n) return
