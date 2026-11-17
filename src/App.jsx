@@ -2,10 +2,23 @@ import React from 'react'
 import { useEffect, useMemo, useRef, useState, useCallback, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gsap, ScrollTrigger, lenis } from './gsap-lenis-setup.js'
+import ICONS from './icons.json'
 import {
   ALL, BY_ID, asset, inr, search, loadCart, saveCart, cartMessage, waLink,
   PHONE, PHONE_DISPLAY, INSTAGRAM, FACEBOOK, MAPS, MAP_EMBED, ADDRESS,
 } from './lib.js'
+
+/* Brand icons (official glyphs, real colours) */
+const PHONE_PATH = 'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'
+const WAIcon = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="#fff" aria-hidden><path d={ICONS.siWhatsapp} /></svg>
+const PhoneIcon = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="#fff" aria-hidden><path d={PHONE_PATH} /></svg>
+const IGIcon = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
+    <defs><radialGradient id="igg" cx="30%" cy="107%" r="150%"><stop offset="0" stopColor="#fdf497" /><stop offset=".05" stopColor="#fdf497" /><stop offset=".45" stopColor="#fd5949" /><stop offset=".6" stopColor="#d6249f" /><stop offset=".9" stopColor="#285AEB" /></radialGradient></defs>
+    <path fill="url(#igg)" d={ICONS.siInstagram} />
+  </svg>
+)
+const FBIcon = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden><path fill="#1877F2" d={ICONS.siFacebook} /></svg>
 
 let lenisRef = lenis
 const scrollToId = (id) => {
@@ -165,6 +178,7 @@ function Nav({ count, openCart }) {
       </nav>
       <div className="nav-r">
         <a className="nav-call" href={`tel:+${PHONE}`}>{PHONE_DISPLAY}</a>
+        <a className="nav-cta" href={waLink('Hi Xenia Collections! I would like a quote.')} target="_blank" rel="noreferrer"><WAIcon size={16} /> Get a quote</a>
         <button className="cart-btn" onClick={openCart} aria-label="Open enquiry list">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 7h12l-1 13H7L6 7Z" /><path d="M9 7a3 3 0 0 1 6 0" /></svg>
           <span>Enquiry</span>
@@ -192,6 +206,18 @@ function Hero() {
       gsap.to('.wall-col.c2', { yPercent: 12, ease: 'none', scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: 1 } })
       gsap.to('.wall-col.c3', { yPercent: -22, ease: 'none', scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: 1 } })
       gsap.to('.hero-copy', { yPercent: 18, opacity: 0.2, ease: 'none', scrollTrigger: { trigger: root.current, start: 'top top', end: 'bottom top', scrub: 1 } })
+      gsap.set('.hero-wall', { rotation: 6, transformPerspective: 1400 })
+      const rx = gsap.quickTo('.hero-wall', 'rotationX', { duration: 1.2, ease: 'power3' })
+      const ry = gsap.quickTo('.hero-wall', 'rotationY', { duration: 1.2, ease: 'power3' })
+      const fx = gsap.quickTo('.hero-badge', 'x', { duration: 1.4, ease: 'power3' })
+      const fy = gsap.quickTo('.hero-badge', 'y', { duration: 1.4, ease: 'power3' })
+      const move = (e) => {
+        const nx = e.clientX / innerWidth - 0.5, ny = e.clientY / innerHeight - 0.5
+        ry(nx * 10); rx(-ny * 8); fx(nx * -30); fy(ny * -24)
+        root.current.style.setProperty('--mx', e.clientX + 'px'); root.current.style.setProperty('--my', e.clientY + 'px')
+      }
+      addEventListener('pointermove', move)
+      return () => removeEventListener('pointermove', move)
     }, root)
     return () => ctx.revert()
   }, [])
@@ -217,8 +243,18 @@ function Hero() {
           <div className="wall-item tall"><Video {...V(5)} autoPlay /></div>
         </div>
       </div>
+      <div className="hero-spot" aria-hidden />
+      <div className="hero-frame" aria-hidden><i /><i /><i /><i /></div>
+      <div className="hero-badge hero-fade" aria-hidden>
+        <svg viewBox="0 0 200 200"><defs><path id="circ" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0" /></defs>
+          <text><textPath href="#circ" startOffset="0">RETURN GIFTS ✦ CORPORATE GIFTING ✦ GERMAN SILVER ✦ </textPath></text></svg>
+        <Logo />
+      </div>
+      <div className="float-chip fc1 hero-fade"><span className="stars">★★★★★</span><b>5.0</b><small>26 Google reviews</small></div>
+      <div className="float-chip fc2 hero-fade"><span className="dot" /><b>Open 24 hours</b><small>Hyderabad</small></div>
+      <div className="float-chip fc3 hero-fade"><b>Corporate &amp; bulk orders</b><small>Logo printing available</small></div>
       <div className="hero-copy">
-        <p className="eyebrow hero-fade"><i /> Return Gifts · Corporate Gifting · Hyderabad</p>
+        <p className="eyebrow hero-fade"><i /> Xenia Collections · Hyderabad</p>
         <h1>
           <Split text="Gifts that" /><br />
           <Split text="feel like" /><br />
@@ -228,7 +264,7 @@ function Hero() {
         <div className="cta-row hero-fade">
           <Magnetic className="btn gold" href="#shop" onClick={(e) => { e.preventDefault(); scrollToId('#shop') }}>Explore collections <span>→</span></Magnetic>
           <Magnetic className="btn ghost" href={waLink('Hi Xenia Collections! I would like to know more about your gifts.')} target="_blank" rel="noreferrer">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Z" /><path fill="#fff" className="wa-ph" d="M8.6 7.4c-.3.3-.6.8-.6 1.500 0 2.800 3.700 6.600 7 7.100.7.1 1.300-.3 1.600-.8.200-.4.200-.700 0-.800l-1.600-.9c-.2-.1-.5 0-.6.100l-.6.700c-.1.100-.3.100-.5 0-.9-.4-1.800-1.100-2.400-2-.1-.2-.1-.3 0-.5l.5-.6c.1-.2.1-.4 0-.6l-.8-1.700c-.1-.2-.4-.3-.7-.2-.3.100-.5.300-.7.500Z" /></svg>
+            <span className="wa-dot"><WAIcon size={16} /></span>
             Chat on WhatsApp</Magnetic>
         </div>
         <div className="hero-meta hero-fade"><span className="dot" /> Open 24 hours · <a href={`tel:+${PHONE}`}>{PHONE_DISPLAY}</a></div>
@@ -273,8 +309,12 @@ function About() {
         </div>
       </div>
       <div className="stats">
-        {[[26, '', '', 'Five-star Google reviews'], [ALL.length, '', '+', 'Designs in the catalogue'], [24, '', ' hrs', 'Open every day'], [100, '', '%', 'Personalisation friendly']].map(([n, p, s, l], i) => (
-          <Reveal key={i} delay={i * 0.08} className="stat"><b><Counter to={n} prefix={p} suffix={s} /></b><span>{l}</span></Reveal>
+        {[[26, '', '', 'Five-star Google reviews', '★'], [ALL.length, '', '+', 'Designs in the catalogue', '✦'], [24, '', '/7', 'Open every day', '◷'], [100, '', '%', 'Personalisation friendly', '✎']].map(([n, p, sfx, l, ic], i) => (
+          <Reveal key={i} delay={i * 0.1} className={`stat s${i}`}>
+            <i className="stat-ic" aria-hidden>{ic}</i>
+            <div className="stat-num"><Counter to={n} prefix={p} suffix={sfx} /></div>
+            <span className="stat-l">{l}</span>
+          </Reveal>
         ))}
       </div>
     </section>
@@ -619,7 +659,7 @@ function Visit() {
             <dt>Owner</dt><dd>Sushma Mada</dd>
             <dt>Address</dt><dd>{ADDRESS}</dd>
             <dt>Find us</dt><dd><a href={MAPS} target="_blank" rel="noreferrer">Open in Google Maps ↗</a></dd>
-            <dt>Follow</dt><dd><a href={INSTAGRAM} target="_blank" rel="noreferrer">Instagram</a> · <a href={FACEBOOK} target="_blank" rel="noreferrer">Facebook</a></dd>
+            <dt>Follow</dt><dd className="socials"><a className="soc ig" href={INSTAGRAM} target="_blank" rel="noreferrer"><IGIcon /> Instagram</a><a className="soc fb" href={FACEBOOK} target="_blank" rel="noreferrer"><FBIcon /> Facebook</a></dd>
           </dl>
           <div className="cta-row"><a className="btn gold" href={`tel:+${PHONE}`}>Call now</a><a className="btn ghost" href={MAPS} target="_blank" rel="noreferrer">Get directions</a></div>
         </div>
@@ -645,10 +685,8 @@ function FloatWA({ count, openCart }) {
   return (
     <div className="floaters">
       {count > 0 && <button className="fl-cart" onClick={openCart}>View list ({count})</button>}
-      <a className="fl-wa" href={waLink('Hi Xenia Collections! I have an enquiry.')} target="_blank" rel="noreferrer" aria-label="WhatsApp us">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Z" /><path fill="#fff" className="wa-ph" d="M8.6 7.4c-.3.3-.6.8-.6 1.500 0 2.800 3.700 6.600 7 7.100.7.1 1.300-.3 1.600-.8.200-.4.200-.700 0-.800l-1.600-.9c-.2-.1-.5 0-.6.100l-.6.700c-.1.100-.3.100-.5 0-.9-.4-1.800-1.100-2.400-2-.1-.2-.1-.3 0-.5l.5-.6c.1-.2.1-.4 0-.6l-.8-1.700c-.1-.2-.4-.3-.7-.2-.3.100-.5.300-.7.500Z" /></svg>
-      </a>
-      <a className="fl-call" href={`tel:+${PHONE}`} aria-label="Call us"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z" /></svg></a>
+      <a className="fl-call" href={`tel:+${PHONE}`} aria-label="Call us"><PhoneIcon size={24} /></a>
+      <a className="fl-wa" href={waLink('Hi Xenia Collections! I have an enquiry.')} target="_blank" rel="noreferrer" aria-label="WhatsApp us"><WAIcon size={34} /></a>
     </div>
   )
 }
