@@ -2,52 +2,14 @@ import React from 'react'
 import { useEffect, useMemo, useRef, useState, useCallback, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gsap, ScrollTrigger, lenis } from './gsap-lenis-setup.js'
-import ICONS from './icons.json'
+import { PHONE_PATH, WAIcon, PhoneIcon, IGIcon, FBIcon, lenisRef, scrollToId, BRAND, Logo, ScrollBar, Split, Reveal, Magnetic, Counter, Video, toast, flyToCart } from './shared.jsx'
+import Studio, { Dropzone, SendFlow } from './Studio.jsx'
+import { Featured, Rails, GiftFinder, Cursor, Toaster, MobileBar, SideTab } from './Showcase.jsx'
 import {
   ALL, BY_ID, asset, inr, search, loadCart, saveCart, cartMessage, waLink,
   PHONE, PHONE_DISPLAY, INSTAGRAM, FACEBOOK, MAPS, MAP_EMBED, ADDRESS,
 } from './lib.js'
 
-/* Brand icons (official glyphs, real colours) */
-const PHONE_PATH = 'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'
-const WAIcon = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="#fff" aria-hidden><path d={ICONS.siWhatsapp} /></svg>
-const PhoneIcon = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="#fff" aria-hidden><path d={PHONE_PATH} /></svg>
-const IGIcon = ({ size = 22 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
-    <defs><radialGradient id="igg" cx="30%" cy="107%" r="150%"><stop offset="0" stopColor="#fdf497" /><stop offset=".05" stopColor="#fdf497" /><stop offset=".45" stopColor="#fd5949" /><stop offset=".6" stopColor="#d6249f" /><stop offset=".9" stopColor="#285AEB" /></radialGradient></defs>
-    <path fill="url(#igg)" d={ICONS.siInstagram} />
-  </svg>
-)
-const FBIcon = ({ size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden><path fill="#1877F2" d={ICONS.siFacebook} /></svg>
-
-let lenisRef = lenis
-const scrollToId = (id) => {
-  const el = document.querySelector(id)
-  if (!el) return
-  lenisRef ? lenisRef.scrollTo(el, { offset: -70, duration: 1.4 }) : el.scrollIntoView({ behavior: 'smooth' })
-}
-
-const BRAND = ['#3a86d4', '#cf1f78', '#f7b520', '#b9d531']
-function Logo({ className = '' }) {
-  return (
-    <svg className={`logo-mark ${className}`} viewBox="0 0 64 64" aria-hidden>
-      <path fill={BRAND[3]} d="M10 17C16 6 26 6 31 15 22 19 15 20 10 17Z" />
-      <path fill={BRAND[1]} d="M54 17C48 6 38 6 33 15 42 19 49 20 54 17Z" />
-      <path fill={BRAND[0]} d="M5 20C20 14 31 24 29 40 14 37 5 31 5 20Z" />
-      <path fill={BRAND[1]} d="M59 20C44 14 33 24 35 40 50 37 59 31 59 20Z" />
-      <path fill={BRAND[2]} d="M11 41C22 38 29 46 31 61 17 59 9 51 11 41Z" />
-      <path fill={BRAND[3]} d="M53 41C42 38 35 46 33 61 47 59 55 51 53 41Z" />
-    </svg>
-  )
-}
-function ScrollBar() {
-  const ref = useRef(null)
-  useEffect(() => {
-    const f = () => { const h = document.documentElement.scrollHeight - innerHeight; ref.current && (ref.current.style.transform = `scaleX(${h > 0 ? scrollY / h : 0})`) }
-    addEventListener('scroll', f, { passive: true }); f(); return () => removeEventListener('scroll', f)
-  }, [])
-  return <div className="scroll-bar" ref={ref} />
-}
 
 /* ───────────── Preloader ───────────── */
 function Preloader({ done }) {
@@ -111,62 +73,13 @@ function Particles() {
   return <canvas ref={ref} className="particles" aria-hidden />
 }
 
-/* ───────────── Small helpers ───────────── */
-function Split({ text, className = '' }) {
-  return (
-    <span className={`split ${className}`} aria-label={text}>
-      {text.split(' ').map((w, i) => (
-        <span className="w" key={i} aria-hidden><span className="wi">{w}&nbsp;</span></span>
-      ))}
-    </span>
-  )
-}
-function Reveal({ children, delay = 0, y = 40, className = '', as: Tag = 'div' }) {
-  const M = motion[Tag] || motion.div
-  return (
-    <M className={className} initial={{ opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] }}>
-      {children}
-    </M>
-  )
-}
-function Magnetic({ children, className = '', ...rest }) {
-  const ref = useRef(null)
-  const onMove = (e) => {
-    const r = ref.current.getBoundingClientRect()
-    gsap.to(ref.current, { x: (e.clientX - r.left - r.width / 2) * 0.25, y: (e.clientY - r.top - r.height / 2) * 0.35, duration: 0.4, ease: 'power3.out' })
-  }
-  const onLeave = () => gsap.to(ref.current, { x: 0, y: 0, duration: 0.8, ease: 'elastic.out(1,0.4)' })
-  return <a ref={ref} className={className} onMouseMove={onMove} onMouseLeave={onLeave} {...rest}>{children}</a>
-}
-function Counter({ to, prefix = '', suffix = '' }) {
-  const ref = useRef(null)
-  useEffect(() => {
-    const o = { v: 0 }
-    const st = ScrollTrigger.create({
-      trigger: ref.current, start: 'top 90%', once: true,
-      onEnter: () => gsap.to(o, { v: to, duration: 2, ease: 'power2.out', onUpdate: () => ref.current && (ref.current.textContent = prefix + Math.round(o.v).toLocaleString('en-IN') + suffix) }),
-    })
-    return () => st.kill()
-  }, [to])
-  return <span ref={ref}>{prefix}0{suffix}</span>
-}
-function Video({ src, poster, className = '', ...rest }) {
-  const ref = useRef(null)
-  useEffect(() => {
-    const el = ref.current
-    const io = new IntersectionObserver(([e]) => { e.isIntersecting ? el.play().catch(() => {}) : el.pause() }, { threshold: 0.25 })
-    io.observe(el); return () => io.disconnect()
-  }, [])
-  return <video ref={ref} className={className} src={asset(src)} poster={asset(poster)} muted loop playsInline preload="metadata" {...rest} />
-}
 
 /* ───────────── Navigation ───────────── */
 function Nav({ count, openCart }) {
   const [solid, setSolid] = useState(false)
   const [menu, setMenu] = useState(false)
   useEffect(() => { const f = () => setSolid(scrollY > 60); f(); addEventListener('scroll', f); return () => removeEventListener('scroll', f) }, [])
-  const links = [['#shop', 'Collections'], ['#reels', 'Showroom'], ['#custom', 'Corporate'], ['#occasions', 'Occasions'], ['#visit', 'Visit']]
+  const links = [['#explore', 'Collections'], ['#finder', 'Gift finder'], ['#studio', 'Upload logo'], ['#reels', 'Showroom'], ['#visit', 'Visit']]
   const go = (h) => { setMenu(false); scrollToId(h) }
   return (
     <header className={`nav ${solid ? 'solid' : ''}`}>
@@ -174,7 +87,7 @@ function Nav({ count, openCart }) {
         <Logo /><span className="brand-t">ENIA<small>COLLECTIONS</small></span>
       </a>
       <nav className={menu ? 'open' : ''}>
-        {links.map(([h, l]) => <a key={h} href={h} onClick={(e) => { e.preventDefault(); go(h) }}>{l}</a>)}
+        {links.map(([h, l]) => <a key={h} href={h} className={h === '#studio' ? 'nav-up' : ''} onClick={(e) => { e.preventDefault(); go(h) }}>{h === '#studio' && <i className="pulse" />}{l}</a>)}
       </nav>
       <div className="nav-r">
         <a className="nav-call" href={`tel:+${PHONE}`}>{PHONE_DISPLAY}</a>
@@ -267,6 +180,7 @@ function Hero() {
             <span className="wa-dot"><WAIcon size={16} /></span>
             Chat on WhatsApp</Magnetic>
         </div>
+        <button className="hero-up hero-fade" onClick={() => scrollToId('#studio')}><span className="hu-new">New</span> Upload your logo &amp; preview it on your gift <span>→</span></button>
         <div className="hero-meta hero-fade"><span className="dot" /> Open 24 hours · <a href={`tel:+${PHONE}`}>{PHONE_DISPLAY}</a></div>
       </div>
       <div className="scroll-cue"><i /></div>
@@ -362,10 +276,12 @@ const CATS = ['All', 'German Silver', 'Painted Trays', 'Diaries', 'Bottles', 'Hi
 const SUBS = ['All types', 'Pooja & Decor', 'Frames & Mirrors', 'Trays & Platters', 'Gift Sets', 'Clutch Bags']
 const BUDGETS = [['Any budget', Infinity], ['Under ₹750', 750], ['Under ₹1,000', 1000], ['Under ₹1,500', 1500]]
 
+const tilt = (e) => { const el = e.currentTarget, r = el.getBoundingClientRect(); el.style.setProperty('--rx', ((e.clientY - r.top) / r.height - 0.5) * -8 + 'deg'); el.style.setProperty('--ry', ((e.clientX - r.left) / r.width - 0.5) * 10 + 'deg'); el.style.setProperty('--sx', ((e.clientX - r.left) / r.width) * 100 + '%') }
+const untilt = (e) => { e.currentTarget.style.setProperty('--rx', '0deg'); e.currentTarget.style.setProperty('--ry', '0deg') }
 const Card = forwardRef(function Card({ p, qty, add, open, i }, ref) {
   return (
-    <motion.article ref={ref} layout initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5, delay: Math.min(i, 8) * 0.04 }} className="card">
-      <button className="card-img" onClick={() => open(p)} aria-label={`View ${p.name}`}>
+    <motion.article ref={ref} onMouseMove={tilt} onMouseLeave={untilt} layout initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.5, delay: Math.min(i, 8) * 0.04 }} className="card">
+      <button className="card-img" onClick={() => open(p)} aria-label={`View ${p.name}`} data-cursor="View">
         <img src={asset(p.img)} alt={p.name} loading="lazy" decoding="async" />
         <span className="badge">{p.tag}</span>
         <span className="quick">Quick view</span>
@@ -377,7 +293,7 @@ const Card = forwardRef(function Card({ p, qty, add, open, i }, ref) {
           {qty ? (
             <div className="step"><button onClick={() => add(p.id, -1)}>−</button><b>{qty}</b><button onClick={() => add(p.id, 1)}>+</button></div>
           ) : (
-            <button className="add" onClick={() => add(p.id, 1)}>+ Enquire</button>
+            <button className="add" onClick={(e) => { add(p.id, 1); flyToCart(e.currentTarget.closest('.card').querySelector('img')) }}>+ Enquire</button>
           )}
         </div>
       </div>
@@ -434,7 +350,7 @@ function Shop({ cart, add, open, catReq }) {
 }
 
 /* ───────────── Quick view modal ───────────── */
-function QuickView({ p, close, add, qty }) {
+function QuickView({ p, close, add, qty, customise }) {
   useEffect(() => {
     if (!p) return
     const k = (e) => e.key === 'Escape' && close()
@@ -446,7 +362,7 @@ function QuickView({ p, close, add, qty }) {
     <AnimatePresence>
       {p && (
         <motion.div className="modal-bg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close}>
-          <motion.div className="modal" onClick={(e) => e.stopPropagation()} initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ type: 'spring', damping: 26, stiffness: 240 }}>
+          <motion.div data-lenis-prevent className="modal" onClick={(e) => e.stopPropagation()} initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 40, opacity: 0 }} transition={{ type: 'spring', damping: 26, stiffness: 240 }}>
             <button className="x" onClick={close} aria-label="Close">×</button>
             <div className="m-img"><img src={asset(p.img)} alt={p.name} /></div>
             <div className="m-info">
@@ -456,9 +372,9 @@ function QuickView({ p, close, add, qty }) {
               <p className="m-d">{p.sub}. Ideal for return gifts, weddings, festivals and corporate gifting. Personalisation with your name or logo can be arranged — just ask.</p>
               <ul className="m-ul"><li>Gift-ready packaging</li><li>Logo / name customisation</li><li>Bulk &amp; custom budgets welcome</li></ul>
               <div className="m-cta">
-                <button className="btn gold" onClick={() => add(p.id, 1)}>{qty ? `In your list (${qty}) — add one more` : '+ Add to enquiry list'}</button>
+                <button className="btn gold" onClick={(e) => { add(p.id, 1); flyToCart(e.currentTarget.closest('.modal').querySelector('.m-img img')) }}>{qty ? `In your list (${qty}) — add one more` : '+ Add to enquiry list'}</button>
                 <a className="btn ghost dark" target="_blank" rel="noreferrer" href={waLink(`Hi Xenia Collections! I'm interested in *${p.name}* (${p.id}). Could you share price & availability?`)}>Ask on WhatsApp</a>
-                <a className="btn ghost dark" target="_blank" rel="noreferrer" href={waLink(`Hi! I'd like *${p.name}* (${p.id}) customised with my logo/name. Quantity: ___ . Please share a quote.`)}>Customise with my logo</a>
+                <button className="btn ghost dark up" onClick={() => customise(p)}>⬆ Upload logo &amp; customise this</button>
               </div>
               {related.length > 0 && <div className="m-rel"><small>You may also like</small><div>{related.map((r) => <img key={r.id} src={asset(r.img)} alt={r.name} title={r.name} />)}</div></div>}
             </div>
@@ -470,7 +386,8 @@ function QuickView({ p, close, add, qty }) {
 }
 
 /* ───────────── Cart drawer ───────────── */
-function CartDrawer({ open, close, cart, add, clear }) {
+function CartDrawer({ open, close, cart, add, clear, files, setFiles }) {
+  const [flow, setFlow] = useState(false)
   const [who, setWho] = useState({ name: '', event: '', date: '', logo: false, note: '' })
   const items = [...cart].map(([id, q]) => [BY_ID.get(id), q]).filter(([p]) => p)
   const total = items.reduce((s, [p, q]) => s + (p.price || 0) * q, 0)
@@ -482,7 +399,7 @@ function CartDrawer({ open, close, cart, add, clear }) {
       {open && (
         <>
           <motion.div className="drawer-bg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} />
-          <motion.aside className="drawer" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 260 }}>
+          <motion.aside data-lenis-prevent className="drawer" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 260 }}>
             <header><h3>Your enquiry list</h3><button onClick={close} aria-label="Close">×</button></header>
             {items.length === 0 ? (
               <div className="d-empty"><div>✦</div><p>Your list is empty.<br />Tap <b>+ Enquire</b> on any gift to start building your quote.</p><button className="btn gold" onClick={() => { close(); scrollToId('#shop') }}>Browse collections</button></div>
@@ -500,11 +417,13 @@ function CartDrawer({ open, close, cart, add, clear }) {
                   <label>Needed by<input type="date" value={who.date} onChange={set('date')} /></label>
                   <label className="chk"><input type="checkbox" checked={who.logo} onChange={set('logo')} /> I want my logo / name on these</label>
                   <textarea rows="2" placeholder="Anything else? Budget, colours, quantity…" value={who.note} onChange={set('note')} />
+                  <Dropzone files={files} setFiles={setFiles} compact />
                 </div>
                 <footer>
                   {total > 0 && <div className="d-total"><span>Indicative total (priced items)</span><b>{inr(total)}</b></div>}
                   <small className="d-note">{unpriced ? 'Items marked “price on request” will be quoted by us on WhatsApp, with bulk rates and a design preview.' : 'We’ll confirm final price and availability on WhatsApp.'}</small>
-                  <a className="btn gold wide" target="_blank" rel="noreferrer" href={waLink(cartMessage(cart, who))}>Send enquiry on WhatsApp →</a>
+                  <AnimatePresence>{flow && <SendFlow text={cartMessage(cart, { ...who, logo: who.logo || files.length > 0 })} files={files} onClose={() => setFlow(false)} />}</AnimatePresence>
+                  {!flow && <button className="btn gold wide" onClick={() => setFlow(true)}>Send enquiry{files.length ? ` + ${files.length} file${files.length > 1 ? 's' : ''}` : ''} →</button>}
                   <button className="link" onClick={clear}>Clear list</button>
                 </footer>
               </>
@@ -577,7 +496,7 @@ function Custom() {
           <div className="custom-head">
           <p className="eyebrow"><i /> Corporate &amp; bulk orders</p>
           <h2>From idea to <em>gift box</em> in four steps</h2>
-          <a className="btn gold" href="#bulk" onClick={(e) => { e.preventDefault(); scrollToId('#bulk') }}>Request a bulk quote →</a>
+          <a className="btn gold" href="#studio" onClick={(e) => { e.preventDefault(); scrollToId('#studio') }}>Upload logo &amp; get a quote →</a>
         </div>
           {STEPS.map(([n, t, d, img]) => (
             <article className="step-card" key={n}>
@@ -599,48 +518,6 @@ function Occasions() {
       <div className="sec-head center"><p className="eyebrow"><i /> Gifting for every moment</p><h2>Small to big. <em>We’ve got it.</em></h2></div>
       <Marquee items={OCC} />
       <Marquee items={['Multipurpose storage bags', 'Party favours', 'Clutches', 'Sling bags', 'Designer potlis', 'Handmade theme candles', 'Soap hampers', 'Kumkum boxes', 'Dry fruit boxes', 'Light-weight stone items']} rev />
-    </section>
-  )
-}
-
-/* ───────────── Bulk enquiry form ───────────── */
-function Bulk() {
-  const vref = useRef(null)
-  useEffect(() => {
-    let effect, dead = false
-    const st = ScrollTrigger.create({
-      trigger: vref.current, start: 'top 95%', once: true,
-      onEnter: async () => {
-        const { initVanta } = await import('./vanta-setup.js')
-        if (!dead) effect = initVanta(vref.current, { color: 0x4a0d34, shininess: 38, waveHeight: 18, waveSpeed: 0.7, zoom: 0.85 })
-      },
-    })
-    return () => { dead = true; st.kill(); effect && effect.destroy() }
-  }, [])
-  const [f, setF] = useState({ name: '', company: '', qty: '', budget: '', date: '', type: 'Corporate gifts', logo: true, msg: '' })
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
-  const msg = `*Bulk enquiry – Xenia Collections website*\nName: ${f.name}\nCompany / Occasion: ${f.company}\nGift type: ${f.type}\nQuantity: ${f.qty}\nBudget per gift: ₹${f.budget}\nNeeded by: ${f.date}\nLogo / personalisation: ${f.logo ? 'Yes' : 'No'}\n${f.msg ? 'Note: ' + f.msg : ''}`
-  return (
-    <section className="bulk" id="bulk">
-      <div className="vanta-bg" ref={vref} aria-hidden />
-      <div className="bulk-in">
-        <div className="bulk-l">
-          <p className="eyebrow"><i /> Tell us what you need</p>
-          <h2>Planning an event or <em>company gifting?</em></h2>
-          <p className="body">Share a few details and we’ll come back with options that match your budget — return gifts, and premium corporate sets with your branding.</p>
-          <ul className="ticks"><li>Budget-friendly, rich-looking options</li><li>Logo, name &amp; message personalisation</li><li>Quick quotes on WhatsApp</li><li>Open 24 hours — call anytime</li></ul>
-          <a className="phone-big" href={`tel:+${PHONE}`}>{PHONE_DISPLAY}</a>
-        </div>
-        <form className="bulk-f" onSubmit={(e) => { e.preventDefault(); window.open(waLink(msg), '_blank') }}>
-          <div className="two"><input required placeholder="Your name" value={f.name} onChange={set('name')} /><input placeholder="Company / occasion" value={f.company} onChange={set('company')} /></div>
-          <select value={f.type} onChange={set('type')}>{['Corporate gifts', 'Return gifts', 'Wedding / engagement', 'Festival gifting', 'Diaries & bottles', 'German silver', 'Something else'].map((o) => <option key={o}>{o}</option>)}</select>
-          <div className="two"><input required type="number" min="1" placeholder="Quantity" value={f.qty} onChange={set('qty')} /><input type="number" min="0" placeholder="Budget per gift (₹)" value={f.budget} onChange={set('budget')} /></div>
-          <label>Needed by<input type="date" value={f.date} onChange={set('date')} /></label>
-          <label className="chk"><input type="checkbox" checked={f.logo} onChange={set('logo')} /> I want logo / name printing</label>
-          <textarea rows="3" placeholder="Anything else we should know?" value={f.msg} onChange={set('msg')} />
-          <button className="btn gold wide" type="submit">Send on WhatsApp →</button>
-        </form>
-      </div>
     </section>
   )
 }
@@ -698,15 +575,30 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false)
   const [view, setView] = useState(null)
   const [catReq, setCatReq] = useState({ cat: null, n: 0 })
+  const [files, setFiles] = useState([])
+  const [studioReq, setStudioReq] = useState({ n: 0 })
 
   useEffect(() => { if (ready) setTimeout(() => ScrollTrigger.refresh(), 300) }, [ready])
   useEffect(() => saveCart(cart), [cart])
 
-  const add = useCallback((id, d) => setCart((c) => {
-    const m = new Map(c), n = (m.get(id) || 0) + d
-    n <= 0 ? m.delete(id) : m.set(id, n)
-    return m
-  }), [])
+  const add = useCallback((id, d) => {
+    if (d > 0) toast('Added to your enquiry ✓', { label: 'View list', fn: () => setCartOpen(true) })
+    setCart((c) => {
+      const m = new Map(c), n = (m.get(id) || 0) + d
+      n <= 0 ? m.delete(id) : m.set(id, n)
+      return m
+    })
+  }, [])
+  const STUDIO_CAT = { 'German Silver': 'German silver', Diaries: 'Diaries', Bottles: 'Bottles', '2-in-1 Sets': 'Gift sets', '3-in-1 Sets': 'Gift sets', '4-in-1 Sets': 'Gift sets', 'Hip Flask Sets': 'Hip flask sets', 'Painted Trays': 'Return gifts' }
+  const customise = (p) => { setView(null); setStudioReq({ cat: STUDIO_CAT[p.cat] || 'Corporate gifts', product: p, n: Date.now() }); setTimeout(() => scrollToId('#studio'), 350) }
+  useEffect(() => { // section headings: masked rise-in
+    if (!ready) return
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray('.sec-head h2').forEach((h) => gsap.fromTo(h, { clipPath: 'inset(0 0 100% 0)', y: 60 }, { clipPath: 'inset(0 0 0% 0)', y: 0, duration: 1.2, ease: 'power4.out', scrollTrigger: { trigger: h, start: 'top 88%' } }))
+      gsap.utils.toArray('.sec-head .eyebrow i').forEach((l) => gsap.fromTo(l, { scaleX: 0 }, { scaleX: 1, transformOrigin: 'left', duration: 1, ease: 'power3.out', scrollTrigger: { trigger: l, start: 'top 90%' } }))
+    })
+    return () => ctx.revert()
+  }, [ready])
   const count = [...cart.values()].reduce((a, b) => a + b, 0)
   const pick = (cat) => { setCatReq({ cat, n: Date.now() }); scrollToId('#shop') }
 
@@ -719,20 +611,27 @@ export default function App() {
       <main>
         <Hero />
         <Marquee items={['Return gifts & corporate gifting', 'Thamboolam combos', 'Festive hampers', 'Wedding hampers', 'Engagement packing', 'Employee appreciation gifts', 'Eco-friendly gifts', 'Promotional gifts', 'Personalised umbrellas', 'Jute bags', 'German silver items']} />
+        <Featured open={setView} add={add} />
         <About />
         <Tiles pick={pick} />
+        <Rails open={setView} add={add} cart={cart} pick={pick} />
+        <GiftFinder open={setView} add={add} pick={pick} cart={cart} />
         <Shop cart={cart} add={add} open={setView} catReq={catReq} />
+        <Studio files={files} setFiles={setFiles} req={studioReq} />
         <Reels />
-        <Reviews />
         <Custom />
+        <Reviews />
         <Occasions />
-        <Bulk />
         <Visit />
       </main>
       <Footer />
       <FloatWA count={count} openCart={() => setCartOpen(true)} />
-      <QuickView p={view} close={() => setView(null)} add={add} qty={view ? cart.get(view.id) : 0} />
-      <CartDrawer open={cartOpen} close={() => setCartOpen(false)} cart={cart} add={add} clear={() => setCart(new Map())} />
+      <QuickView p={view} close={() => setView(null)} add={add} qty={view ? cart.get(view.id) : 0} customise={customise} />
+      <CartDrawer open={cartOpen} close={() => setCartOpen(false)} cart={cart} add={add} clear={() => setCart(new Map())} files={files} setFiles={setFiles} />
+      <SideTab />
+      <MobileBar count={count} openCart={() => setCartOpen(true)} />
+      <Toaster />
+      <Cursor />
     </>
   )
 }
