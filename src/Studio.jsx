@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScrollTrigger } from './gsap-lenis-setup.js'
 import { asset, waLink, PHONE_DISPLAY } from './lib.js'
-import { WAIcon, Reveal, toast, ACCEPT, MAX_FILES, MAX_MB, toEntries, fileKind, fmtSize, canShareFiles, shareFiles } from './shared.jsx'
+import { WAIcon, Reveal, toast, ACCEPT, MAX_FILES, MAX_MB, toEntries, fileKind, fmtSize, canShareFiles, shareFiles, emailEnquiry } from './shared.jsx'
 
 /* Categories for the studio: preview bases + what to upload */
 export const STUDIO = [
@@ -68,15 +68,39 @@ export function Dropzone({ files, setFiles, compact = false }) {
 }
 
 /* ───── Two-step send: details on WhatsApp, then the files ───── */
-export function SendFlow({ text, files, onClose }) {
+export function SendFlow({ text, files, onClose, email }) {
   const [step, setStep] = useState(0)
+  const [mail, setMail] = useState(email ? 'sending' : null)
+  const [skipped, setSkipped] = useState([])
+  useEffect(() => {
+    if (!email) return
+    let live = true
+    emailEnquiry({ ...email, text, files }).then((r) => {
+      if (!live) return
+      setMail(r.ok ? 'sent' : 'error'); setSkipped(r.skipped || [])
+      if (r.ok) toast('Enquiry emailed to Xenia ✓')
+    })
+    return () => { live = false }
+  }, [])
   const share = canShareFiles(files)
   const names = files.map((f) => f.file.name)
   const full = text + (files.length ? `\n\n📎 Sending ${files.length} file${files.length > 1 ? 's' : ''} next: ${names.join(', ')}` : '')
   const copy = async () => { try { await navigator.clipboard.writeText(full); toast('Message copied ✓') } catch { toast('Copy not allowed on this browser') } }
   return (
     <motion.div className="sendflow" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-      <div className="sf-head"><b>Almost done — 2 quick steps</b>{onClose && <button type="button" onClick={onClose} aria-label="Close">×</button>}</div>
+      <div className="sf-head"><b>{mail === 'sent' ? 'Sent! ✓' : 'Sending your enquiry'}</b>{onClose && <button type="button" onClick={onClose} aria-label="Close">×</button>}</div>
+      {mail && (
+        <div className={`sf-mail ${mail}`}>
+          <span className="sf-mail-ic">{mail === 'sending' ? <i className="spin" /> : mail === 'sent' ? '✓' : '!'}</span>
+          <div>
+            {mail === 'sending' && <><b>Emailing your details{files.length ? ` + ${files.length} file${files.length > 1 ? 's' : ''}` : ''}…</b><small>Please keep this page open for a moment.</small></>}
+            {mail === 'sent' && <><b>Emailed to Xenia Collections{files.length - skipped.length > 0 ? ` with ${files.length - skipped.length} file${files.length - skipped.length > 1 ? 's' : ''}` : ''}</b><small>We’ll get back to you soon. For a faster reply, also message us on WhatsApp below.</small></>}
+            {mail === 'error' && <><b>Email couldn’t be sent right now</b><small>No problem — send it on WhatsApp below and we’ll reply there.</small></>}
+            {skipped.length > 0 && <small className="sf-warn">Too large for email (10 MB total): {skipped.join(', ')} — please send these on WhatsApp.</small>}
+          </div>
+        </div>
+      )}
+      {mail === 'sent' && <p className="sf-or">Optional · faster reply on WhatsApp</p>}
       <ol className="sf-steps">
         <li className={step > 0 ? 'done' : 'now'}>
           <span>1</span>
@@ -136,7 +160,7 @@ export default function Studio({ files, setFiles, req }) {
   const [size, setSize] = useState(30)
   const [pos, setPos] = useState({ x: 50, y: 45 })
   const [pers, setPers] = useState(['Logo print'])
-  const [f, setF] = useState({ name: '', company: '', text: '', qty: '', budget: '', date: '', city: 'Hyderabad', note: '' })
+  const [f, setF] = useState({ name: '', phone: '', email: '', company: '', text: '', qty: '', budget: '', date: '', city: 'Hyderabad', note: '' })
   const [flow, setFlow] = useState(false)
 
   useEffect(() => { // Vanta waves background (user's vanta-setup), lazy
@@ -167,6 +191,8 @@ export default function Studio({ files, setFiles, req }) {
     f.text && `Name / text to print: ${f.text}`,
     `Preview style: ${STYLES.find((s) => s[1] === style)[0]}`,
     f.name && `Name: ${f.name}`,
+    f.phone && `Phone / WhatsApp: ${f.phone}`,
+    f.email && `Email: ${f.email}`,
     f.company && `Company / occasion: ${f.company}`,
     f.qty && `Quantity: ${f.qty}`,
     f.budget && `Budget per gift: ₹${f.budget}`,
@@ -175,7 +201,7 @@ export default function Studio({ files, setFiles, req }) {
     f.note && `Note: ${f.note}`,
   ].filter(Boolean).join('\n'), [S, product, pers, f, style])
 
-  const submit = (e) => { e.preventDefault(); setFlow(true) }
+  const submit = (e) => { e.preventDefault(); setFlow(Date.now()) }
 
   return (
     <section className="studio" id="studio">
@@ -222,7 +248,8 @@ export default function Studio({ files, setFiles, req }) {
 
           <form className="st-col st-form" onSubmit={submit}>
             <div className="st-step"><span>4</span> Your details</div>
-            <div className="two"><input required placeholder="Your name *" value={f.name} onChange={set('name')} /><input placeholder="Company / occasion" value={f.company} onChange={set('company')} /></div>
+            <div className="two"><input required placeholder="Your name *" value={f.name} onChange={set('name')} /><input required type="tel" inputMode="tel" pattern="[0-9+ ()-]{8,}" title="Enter a valid phone number" placeholder="Phone / WhatsApp *" value={f.phone} onChange={set('phone')} /></div>
+            <div className="two"><input type="email" placeholder="Email (optional)" value={f.email} onChange={set('email')} /><input placeholder="Company / occasion" value={f.company} onChange={set('company')} /></div>
             <div className="two"><input required type="number" min="1" placeholder="Quantity *" value={f.qty} onChange={set('qty')} /><input type="number" min="0" placeholder="Budget / gift (₹)" value={f.budget} onChange={set('budget')} /></div>
             <div className="two"><label>Needed by<input type="date" value={f.date} onChange={set('date')} /></label><label>Delivery city<input value={f.city} onChange={set('city')} /></label></div>
             <textarea rows="3" placeholder="Anything else? Colours, packaging, delivery address…" value={f.note} onChange={set('note')} />
@@ -230,7 +257,9 @@ export default function Studio({ files, setFiles, req }) {
               <span>{S.k}</span><span>{files.length} file{files.length === 1 ? '' : 's'}</span><span>{pers.length} option{pers.length === 1 ? '' : 's'}</span>
             </div>
             <button className="btn gold wide" type="submit">Send customisation request →</button>
-            <AnimatePresence>{flow && <SendFlow text={text} files={files} onClose={() => setFlow(false)} />}</AnimatePresence>
+            <small className="st-privacy">Your details and files are emailed to Xenia Collections only.</small>
+            <AnimatePresence>{flow && <SendFlow key={flow} text={text} files={files} onClose={() => setFlow(false)}
+              email={{ subject: `New customisation enquiry – ${S.k} – ${f.name}`, fields: { Name: f.name, Phone: f.phone, email: f.email, Category: S.k, Quantity: f.qty, 'Needed by': f.date } }} />}</AnimatePresence>
           </form>
         </div>
       </div>

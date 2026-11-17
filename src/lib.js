@@ -56,6 +56,8 @@ export function cartMessage(cart, who) {
   lines.push('')
   if (total) lines.push(`Indicative total${priced ? '' : ' (priced items only)'}: ${inr(total)}`)
   if (who.name) lines.push(`Name: ${who.name}`)
+  if (who.phone) lines.push(`Phone: ${who.phone}`)
+  if (who.email) lines.push(`Email: ${who.email}`)
   if (who.event) lines.push(`Occasion / Company: ${who.event}`)
   if (who.date) lines.push(`Needed by: ${who.date}`)
   if (who.logo) lines.push('Logo / personalisation: Yes, please')

@@ -388,8 +388,9 @@ function QuickView({ p, close, add, qty, customise }) {
 /* ───────────── Cart drawer ───────────── */
 function CartDrawer({ open, close, cart, add, clear, files, setFiles }) {
   const [flow, setFlow] = useState(false)
-  const [who, setWho] = useState({ name: '', event: '', date: '', logo: false, note: '' })
+  const [who, setWho] = useState({ name: '', phone: '', email: '', event: '', date: '', logo: false, note: '' })
   const items = [...cart].map(([id, q]) => [BY_ID.get(id), q]).filter(([p]) => p)
+  const count = items.reduce((n, [, q]) => n + q, 0)
   const total = items.reduce((s, [p, q]) => s + (p.price || 0) * q, 0)
   const unpriced = items.some(([p]) => !p.price)
   useEffect(() => { open ? lenisRef?.stop() : lenisRef?.start() }, [open])
@@ -412,7 +413,9 @@ function CartDrawer({ open, close, cart, add, clear, files, setFiles }) {
                   ))}
                 </ul>
                 <div className="d-form">
-                  <input placeholder="Your name" value={who.name} onChange={set('name')} />
+                  <input placeholder="Your name *" value={who.name} onChange={set('name')} />
+                  <input type="tel" inputMode="tel" placeholder="Phone / WhatsApp *" value={who.phone} onChange={set('phone')} />
+                  <input type="email" placeholder="Email (optional)" value={who.email} onChange={set('email')} />
                   <input placeholder="Occasion or company (e.g. Marriage, TCS)" value={who.event} onChange={set('event')} />
                   <label>Needed by<input type="date" value={who.date} onChange={set('date')} /></label>
                   <label className="chk"><input type="checkbox" checked={who.logo} onChange={set('logo')} /> I want my logo / name on these</label>
@@ -422,8 +425,9 @@ function CartDrawer({ open, close, cart, add, clear, files, setFiles }) {
                 <footer>
                   {total > 0 && <div className="d-total"><span>Indicative total (priced items)</span><b>{inr(total)}</b></div>}
                   <small className="d-note">{unpriced ? 'Items marked “price on request” will be quoted by us on WhatsApp, with bulk rates and a design preview.' : 'We’ll confirm final price and availability on WhatsApp.'}</small>
-                  <AnimatePresence>{flow && <SendFlow text={cartMessage(cart, { ...who, logo: who.logo || files.length > 0 })} files={files} onClose={() => setFlow(false)} />}</AnimatePresence>
-                  {!flow && <button className="btn gold wide" onClick={() => setFlow(true)}>Send enquiry{files.length ? ` + ${files.length} file${files.length > 1 ? 's' : ''}` : ''} →</button>}
+                  <AnimatePresence>{flow && <SendFlow key={flow} text={cartMessage(cart, { ...who, logo: who.logo || files.length > 0 })} files={files} onClose={() => setFlow(false)}
+                    email={{ subject: `New website enquiry – ${count} item${count > 1 ? 's' : ''} – ${who.name}`, fields: { Name: who.name, Phone: who.phone, email: who.email, 'Occasion / company': who.event, 'Needed by': who.date } }} />}</AnimatePresence>
+                  {!flow && <button className="btn gold wide" onClick={() => { if (!who.name.trim() || who.phone.replace(/\D/g, '').length < 8) { toast('Please add your name and phone number'); return } setFlow(Date.now()) }}>Send enquiry{files.length ? ` + ${files.length} file${files.length > 1 ? 's' : ''}` : ''} →</button>}
                   <button className="link" onClick={clear}>Clear list</button>
                 </footer>
               </>

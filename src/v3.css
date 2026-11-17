@@ -230,3 +230,18 @@ main{overflow-x:clip}
 .drawer footer{position:sticky;bottom:0;margin-top:auto;z-index:2}
 .drawer header{position:sticky;top:0;background:#16240f;z-index:2}
 @media(max-width:1000px){.toasts{top:84px;bottom:auto}}
+
+/* email status in send flow */
+.sf-mail{display:flex;gap:.8rem;align-items:flex-start;padding:.8rem;border-radius:14px;background:#eef3e2;border:1px solid #cfdcab}
+.sf-mail.sent{background:#e3f7e9;border-color:#9bd9ae}
+.sf-mail.error{background:#fdeef0;border-color:#f0b3bf}
+.sf-mail div{display:grid;gap:.2rem;min-width:0}
+.sf-mail b{font-weight:600}
+.sf-mail small{color:#4c5642;font-size:.82rem}
+.sf-mail-ic{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#16240f;color:#fff;font-weight:700}
+.sf-mail.sent .sf-mail-ic{background:#25D366}.sf-mail.error .sf-mail-ic{background:var(--pink)}
+.sf-mail .spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spinr .8s linear infinite}
+@keyframes spinr{to{transform:rotate(360deg)}}
+.sf-warn{color:#9b145a!important}
+.sf-or{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#6b7560;text-align:center;margin:.2rem 0 -.2rem}
+.st-privacy{color:var(--muted);font-size:.74rem;text-align:center}

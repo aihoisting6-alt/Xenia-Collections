@@ -144,3 +144,40 @@ export const canShareFiles = (files) => {
 export async function shareFiles(files, text) {
   try { await navigator.share({ files: files.map((f) => f.file), text, title: 'Xenia Collections enquiry' }); return true } catch { return false }
 }
+
+/* ───── Email every enquiry (with files) to the shop via FormSubmit ───── */
+export const ENQUIRY_EMAIL = 'xenia.collections2014@gmail.com'
+const EMAIL_ENDPOINT = 'https://formsubmit.co/ajax/' + ENQUIRY_EMAIL
+const EMAIL_LIMIT = 9.5 * 1048576 // FormSubmit allows 10 MB of attachments in total
+const sentKeys = new Set()
+export async function emailEnquiry({ subject, text, fields = {}, files = [] }) {
+  const key = subject + text + files.map((f) => f.id).join()
+  if (sentKeys.has(key)) return { ok: true, skipped: [], dup: true }
+  const fd = new FormData()
+  fd.append('_subject', subject)
+  fd.append('_template', 'table')
+  fd.append('_captcha', 'false')
+  fd.append('_honey', '')
+  for (const [k, v] of Object.entries(fields)) if (v) fd.append(k, v)
+  if (fields.email) fd.append('_replyto', fields.email)
+  fd.append('Enquiry', text.replace(/\*/g, ''))
+  let total = 0
+  const skipped = [], sent = []
+  files.forEach((f) => {
+    if (total + f.file.size > EMAIL_LIMIT) { skipped.push(f.file.name); return }
+    total += f.file.size
+    fd.append(sent.length ? `attachment_${sent.length + 1}` : 'attachment', f.file, f.file.name)
+    sent.push(f.file.name)
+  })
+  if (sent.length) fd.append('Files attached', sent.join(', '))
+  if (skipped.length) fd.append('Files too large for email (send on WhatsApp)', skipped.join(', '))
+  try {
+    const r = await fetch(EMAIL_ENDPOINT, { method: 'POST', headers: { Accept: 'application/json' }, body: fd })
+    const j = await r.json().catch(() => ({}))
+    const ok = r.ok && String(j.success) === 'true'
+    if (ok) sentKeys.add(key)
+    return { ok, skipped, sent, msg: j.message }
+  } catch (e) {
+    return { ok: false, skipped, sent, msg: String(e) }
+  }
+}
